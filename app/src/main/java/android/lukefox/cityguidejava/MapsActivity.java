@@ -30,14 +30,20 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
 
     private GoogleMap mMap; // Google Map object resposible for the map display
     private Marker markerLocation; //Marker object to be used in the map
     private ProgressDialog locationDialog;
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference myRef = database.getReference("locations");
+    LocationData locationData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +90,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onLocationChanged(Location location) {
         LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
         addMarker(latLng);
+        
+        LocationData locationData = new LocationData(latLng.latitude, latLng.longitude);
+        String key =  myRef.push().getKey();
+        Long time = new Date().getTime();
+        myRef.child(key).setValue(locationData);
     }
 
     private void addMarker(LatLng latLng) {
