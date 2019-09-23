@@ -30,11 +30,13 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
 
@@ -43,7 +45,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ProgressDialog locationDialog;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference("locations");
-    LocationData locationData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -85,15 +87,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng eng = new LatLng(53.283912, -9.063874);
         mMap.addMarker(new MarkerOptions().position(eng).title("Marker in Engineering building"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(eng, 10));
+
+        myRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String prevChildKey) {
+                LocationData location = dataSnapshot.getValue(LocationData.class);
+                LatLng eng = new LatLng(location.latitude, location.longitude);
+                mMap.addMarker(new MarkerOptions().position(eng).title("Marker").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String prevChildKey) {}
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {}
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String prevChildKey) {}
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+
+
     }
 
     public void onLocationChanged(Location location) {
         LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
         addMarker(latLng);
-        
+
         LocationData locationData = new LocationData(latLng.latitude, latLng.longitude);
-        String key =  myRef.push().getKey();
-        Long time = new Date().getTime();
+        String key =  locationData.time;
         myRef.child(key).setValue(locationData);
     }
 
